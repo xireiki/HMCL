@@ -167,6 +167,30 @@ public final class GameSettingsInstanceTest {
         assertEquals("17.0.11+9", effective.getInheritable(GameSettings::detectedJavaProperty).version());
     }
 
+    /// Tests that protected properties ignore instance overrides when the launcher protection switch is enabled.
+    @Test
+    public void usesGlobalConfigForProtectedPropertiesWhenProtectionIsEnabled() {
+        LauncherSettings launcherSettings = new LauncherSettings();
+        launcherSettings.instanceOverrideProtectionProperty().set(true);
+        launcherSettings.getProtectedInstanceOverrideProperties().setAll(
+                GameSettings.PROPERTY_LAUNCHER_VISIBILITY,
+                GameSettings.PROPERTY_WIDTH,
+                GameSettings.PROPERTY_HEIGHT,
+                GameSettings.PROPERTY_PROCESS_PRIORITY
+        );
+
+        GameSettings.Instance instance = new GameSettings.Instance();
+        instance.getOverrideProperties().add(GameSettings.PROPERTY_LAUNCHER_VISIBILITY);
+        instance.getOverrideProperties().add(GameSettings.PROPERTY_WIDTH);
+        instance.getOverrideProperties().add(GameSettings.PROPERTY_HEIGHT);
+        instance.getOverrideProperties().add(GameSettings.PROPERTY_PROCESS_PRIORITY);
+
+        assertFalse(instance.isPropertyOverridden(GameSettings.PROPERTY_LAUNCHER_VISIBILITY, launcherSettings));
+        assertFalse(instance.isPropertyOverridden(GameSettings.PROPERTY_WIDTH, launcherSettings));
+        assertFalse(instance.isPropertyOverridden(GameSettings.PROPERTY_HEIGHT, launcherSettings));
+        assertFalse(instance.isPropertyOverridden(GameSettings.PROPERTY_PROCESS_PRIORITY, launcherSettings));
+    }
+
     /// Tests that legacy non-positive maximum memory values are normalized to the suggested memory.
     @Test
     public void normalizesLegacyNonPositiveMaxMemory() {
