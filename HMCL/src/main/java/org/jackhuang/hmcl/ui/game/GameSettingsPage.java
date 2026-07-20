@@ -1365,7 +1365,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     /// Returns whether the setting uses its direct property value.
     private static boolean isPropertyOverridden(GameSettings setting, SettingProperty<?> property) {
         return !(setting instanceof GameSettings.Instance instance)
-                || instance.getOverrideProperties().contains(property.getName());
+                || instance.isPropertyOverridden(property.getName());
     }
 
     /// Updates whether an instance setting uses its direct property value.
@@ -1374,11 +1374,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             return;
         }
 
-        if (overridden) {
-            instance.getOverrideProperties().add(property.getName());
-        } else {
-            instance.getOverrideProperties().remove(property.getName());
-        }
+        instance.setPropertyOverridden(property.getName(), overridden);
     }
 
     /// Returns the direct property value, falling back to the property's default value.

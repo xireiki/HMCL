@@ -168,6 +168,52 @@ public sealed abstract class GameSettings extends ObservableSetting {
             return overrideProperties;
         }
 
+        /// Returns whether the given property is currently overridden by this instance.
+        public boolean isPropertyOverridden(String propertyName) {
+            return isPropertyOverridden(propertyName, null);
+        }
+
+        /// Returns whether the given property is currently overridden by this instance.
+        boolean isPropertyOverridden(String propertyName, @Nullable LauncherSettings launcherSettings) {
+            if (isPropertyProtected(propertyName, launcherSettings)) {
+                return false;
+            }
+            return overrideProperties.contains(propertyName);
+        }
+
+        /// Updates whether the given property is overridden by this instance.
+        public void setPropertyOverridden(String propertyName, boolean overridden) {
+            setPropertyOverridden(propertyName, overridden, null);
+        }
+
+        /// Updates whether the given property is overridden by this instance.
+        void setPropertyOverridden(String propertyName, boolean overridden, @Nullable LauncherSettings launcherSettings) {
+            if (isPropertyProtected(propertyName, launcherSettings)) {
+                overrideProperties.remove(propertyName);
+                return;
+            }
+
+            if (overridden) {
+                overrideProperties.add(propertyName);
+            } else {
+                overrideProperties.remove(propertyName);
+            }
+        }
+
+        /// Returns whether the given property name is protected by the launcher-wide override protection setting.
+        static boolean isPropertyProtected(String propertyName, @Nullable LauncherSettings launcherSettings) {
+            if (launcherSettings == null) {
+                try {
+                    launcherSettings = SettingsManager.settings();
+                } catch (IllegalStateException ignored) {
+                    return false;
+                }
+            }
+
+            return launcherSettings.instanceOverrideProtectionProperty().get()
+                    && launcherSettings.getProtectedInstanceOverrideProperties().contains(propertyName);
+        }
+
         /// JSON adapter for instance settings.
         public static final class Adapter extends ObservableSetting.Adapter<Instance> {
             @Override
@@ -874,7 +920,7 @@ public sealed abstract class GameSettings extends ObservableSetting {
 
     /// Returns whether an instance overrides the given property.
     private static boolean isOverridden(Instance instance, SettingProperty<?> property) {
-        return instance.getOverrideProperties().contains(property.getName());
+        return instance.isPropertyOverridden(property.getName());
     }
 
     /// Returns the property's direct value, or its default value when the direct value is `null`.

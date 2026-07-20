@@ -209,6 +209,29 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
         return disableAutoShowUpdateDialog;
     }
 
+    /// Whether instance-specific overrides are prevented from taking precedence over global settings.
+    @SerializedName("instanceOverrideProtection")
+    private final BooleanProperty instanceOverrideProtection = new SimpleBooleanProperty(false);
+
+    /// Returns whether instance-specific overrides are prevented from taking precedence over global settings.
+    public BooleanProperty instanceOverrideProtectionProperty() {
+        return instanceOverrideProtection;
+    }
+
+    /// The instance setting property names that should keep using the global configuration when override protection is enabled.
+    @SerializedName("protectedInstanceOverrideProperties")
+    private final ObservableList<String> protectedInstanceOverrideProperties = FXCollections.observableArrayList(
+            GameSettings.PROPERTY_LAUNCHER_VISIBILITY,
+            GameSettings.PROPERTY_WIDTH,
+            GameSettings.PROPERTY_HEIGHT,
+            GameSettings.PROPERTY_PROCESS_PRIORITY
+    );
+
+    /// Returns the instance setting property names that should keep using the global configuration when override protection is enabled.
+    public ObservableList<String> getProtectedInstanceOverrideProperties() {
+        return protectedInstanceOverrideProperties;
+    }
+
     /// Whether April Fools features are disabled.
     @SerializedName("disableAprilFools")
     private final BooleanProperty disableAprilFools = new SimpleBooleanProperty(false);
@@ -682,4 +705,5 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
             return new LauncherSettings();
         }
     }
+
 }

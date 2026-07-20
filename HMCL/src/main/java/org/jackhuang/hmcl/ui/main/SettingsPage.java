@@ -203,6 +203,14 @@ public final class SettingsPage extends ScrollPane {
                 }
 
                 {
+                    LineToggleButton instanceOverrideProtectionPane = new LineToggleButton();
+                    instanceOverrideProtectionPane.setTitle(i18n("settings.launcher.instance_override_protection"));
+                    instanceOverrideProtectionPane.setSubtitle(i18n("settings.launcher.instance_override_protection.subtitle"));
+                    instanceOverrideProtectionPane.selectedProperty().bindBidirectional(settings().instanceOverrideProtectionProperty());
+                    miscPaneList.getContent().add(instanceOverrideProtectionPane);
+                }
+
+                {
                     BorderPane debugPane = new BorderPane();
 
                     Label left = new Label(i18n("settings.launcher.debug"));
