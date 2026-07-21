@@ -42,6 +42,15 @@ jobs:
       with:
         cache-cleanup: never
         cache-read-only: ${{ !matrix.cache-write || github.ref_name != github.event.repository.default_branch }}
+    - name: Setup signing keys
+      run: |
+        if [ -n "${{ secrets.HMCL_SIGNATURE_KEY }}" ]; then
+          echo "${{ secrets.HMCL_SIGNATURE_KEY }}" | base64 -d > /tmp/hmcl_signature_key.pkcs8.der
+          echo "HMCL_SIGNATURE_KEY=/tmp/hmcl_signature_key.pkcs8.der" >> $GITHUB_ENV
+        fi
+        if [ -n "${{ secrets.HMCL_SIGNATURE_PUB_KEY }}" ]; then
+          echo "${{ secrets.HMCL_SIGNATURE_PUB_KEY }}" | base64 -d > HMCL/src/main/resources/assets/hmcl_signature_publickey.der
+        fi
     - name: Build with Gradle
       shell: bash
       run: ${{ matrix.build-prefix }} ./gradlew build --no-daemon --parallel --stacktrace
@@ -49,6 +58,7 @@ jobs:
         JAVA_TOOL_OPTIONS: ${{ matrix.java-tool-options }}
         MICROSOFT_AUTH_ID: ${{ secrets.MICROSOFT_AUTH_ID }}
         CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
+        HMCL_SIGNATURE_KEY: ${{ env.HMCL_SIGNATURE_KEY }}
     - if: always()
       name: Get short SHA
       shell: bash
