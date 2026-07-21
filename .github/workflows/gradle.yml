@@ -23,11 +23,21 @@ jobs:
       uses: gradle/actions/setup-gradle@v5
       with:
         cache-cleanup: never
+    - name: Setup signing keys
+      run: |
+        if [ -n "${{ secrets.HMCL_SIGNATURE_KEY }}" ]; then
+          echo "${{ secrets.HMCL_SIGNATURE_KEY }}" | base64 -d > /tmp/hmcl_signature_key.pkcs8.der
+          echo "HMCL_SIGNATURE_KEY=/tmp/hmcl_signature_key.pkcs8.der" >> $GITHUB_ENV
+        fi
+        if [ -n "${{ secrets.HMCL_SIGNATURE_PUB_KEY }}" ]; then
+          echo "${{ secrets.HMCL_SIGNATURE_PUB_KEY }}" | base64 -d > HMCL/src/main/resources/assets/hmcl_signature_publickey.der
+        fi
     - name: Build with Gradle
       run: ./gradlew build --no-daemon --parallel
       env:
         MICROSOFT_AUTH_ID: ${{ secrets.MICROSOFT_AUTH_ID }}
         CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
+        HMCL_SIGNATURE_KEY: ${{ env.HMCL_SIGNATURE_KEY }}
     - name: Get short SHA
       run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
     - name: Upload JAR
