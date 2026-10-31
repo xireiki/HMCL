@@ -5,10 +5,12 @@ package org.jackhuang.hmcl.ui.main;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.theme.Themes;
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.LineButton;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -29,13 +31,13 @@ public class FeedbackPage extends SpinnerPane {
 
         ComponentList groups = new ComponentList();
         {
-            var users = LineButton.createExternalLinkButton(Metadata.GROUPS_URL);
+            var users = createGroupButton(Metadata.GROUPS_URL);
             users.setLargeTitle(true);
             users.setLeading(FXUtils.newBuiltinImage("/assets/img/icon.png"));
             users.setTitle(i18n("contact.chat.qq_group"));
             users.setSubtitle(i18n("contact.chat.qq_group.statement"));
 
-            var discord = LineButton.createExternalLinkButton("https://discord.gg/jVvC7HfM6U");
+            var discord = createGroupButton("https://discord.gg/jVvC7HfM6U");
             discord.setLargeTitle(true);
             discord.setLeading(FXUtils.newBuiltinImage("/assets/img/discord.png"));
             discord.setTitle(i18n("contact.chat.discord"));
@@ -46,7 +48,7 @@ public class FeedbackPage extends SpinnerPane {
 
         ComponentList feedback = new ComponentList();
         {
-            var github = LineButton.createExternalLinkButton("https://github.com/HMCL-dev/HMCL/issues/new/choose");
+            var github = LineButton.createExternalLinkButton("https://github.com/xireiki/HMCL/issues/new/choose");
             github.setLargeTitle(true);
             github.setTitle(i18n("contact.feedback.github"));
             github.setSubtitle(i18n("contact.feedback.github.statement"));
@@ -66,5 +68,18 @@ public class FeedbackPage extends SpinnerPane {
                 ComponentList.createComponentListTitle(i18n("contact.feedback")),
                 feedback
         );
+    }
+
+    /// Creates a button that opens an official group.
+    ///
+    /// Unofficial builds warn before opening, then open the group as usual once the user confirms.
+    private static LineButton createGroupButton(String url) {
+        var button = LineButton.createExternalLinkButton(Metadata.OFFICIAL_BUILD ? url : null);
+        if (!Metadata.OFFICIAL_BUILD) {
+            button.setOnAction(event -> Controllers.dialog(
+                    i18n("unofficial.report.hint"), i18n("message.warning"), MessageType.WARNING,
+                    () -> FXUtils.openLink(url)));
+        }
+        return button;
     }
 }
