@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.game;
 
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
@@ -23,6 +24,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class LogExporter {
@@ -60,7 +62,11 @@ public final class LogExporter {
                 processLogs(runDirectory, "*.log", "runDirectory", zipper, logMatcher);
                 processLogs(runDirectory.resolve("crash-reports"), "*.txt", "crash-reports", zipper, logMatcher);
 
-                zipper.putTextFile(LOG.getLogs(), "hmcl.log");
+                // Mark unofficial builds so anyone reading the exported logs knows not to report them upstream.
+                String hmclLog = Metadata.OFFICIAL_BUILD
+                        ? LOG.getLogs()
+                        : i18n("unofficial.report.hint") + "\n\n" + LOG.getLogs();
+                zipper.putTextFile(hmclLog, "hmcl.log");
                 zipper.putTextFile(logs, "minecraft.log");
                 zipper.putTextFile(Logger.filterForbiddenToken(launchScript), OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "launch.bat" : "launch.sh");
 
