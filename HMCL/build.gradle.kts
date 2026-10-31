@@ -163,6 +163,10 @@ val createPropertiesFile = tasks.register<WriteProperties>("createPropertiesFile
     property("hmcl.version", project.version.toString())
     property("hmcl.add-opens", addOpens.joinToString(" "))
     System.getenv("GITHUB_SHA")?.let { property("hmcl.version.hash", it) }
+    System.getenv("HMCL_UPDATE_URL")?.takeIf { it.isNotBlank() }?.let {
+        val base = it.trimEnd('/')
+        property("hmcl.update.url", if (base.endsWith("/api/update_link")) base else "$base/api/update_link")
+    }
     property("hmcl.version.type", versionType)
     property("hmcl.microsoft.auth.id", microsoftAuthId)
     property("hmcl.curseforge.apikey", curseForgeApiKey)

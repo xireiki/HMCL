@@ -114,6 +114,15 @@ public final class UserSettings extends ObservableSetting implements JsonSchemaS
         return enableOfflineAccount;
     }
 
+    /// The GitHub token used to download nightly updates.
+    @SerializedName("nightlyUpdateGithubToken")
+    private final StringProperty nightlyUpdateGithubToken = new SimpleStringProperty();
+
+    /// Returns the GitHub token used to download nightly updates.
+    public StringProperty nightlyUpdateGithubTokenProperty() {
+        return nightlyUpdateGithubToken;
+    }
+
     /// The JavaFX font antialiasing mode override.
     @SerializedName("fontAntiAliasing")
     private final StringProperty fontAntiAliasing = new SimpleStringProperty();
