@@ -16,6 +16,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
 import org.jackhuang.hmcl.upgrade.RemoteVersion;
+import org.jackhuang.hmcl.upgrade.UpdateChannel;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jsoup.Jsoup;
@@ -30,6 +31,21 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class UpgradeDialog extends JFXDialogLayout {
 
+    /// Returns the page that lists changes for the update.
+    ///
+    /// @param version the available update
+    /// @return the changelog URL, or the nightly source's commit history
+    private static String changelogUrl(RemoteVersion version) {
+        if (version.channel() == UpdateChannel.NIGHTLY) {
+            RemoteVersion.NightlySource source = version.nightly();
+            if (source != null) {
+                return "https://github.com/" + source.repository() + "/commits/" + source.branch();
+            }
+            return Metadata.MANUAL_UPDATE_URL;
+        }
+        return CHANGELOG_URL + version.channel().channelName + ".html";
+    }
+
     public UpgradeDialog(RemoteVersion remoteVersion, Runnable updateRunnable) {
         maxWidthProperty().bind(Controllers.getDecorator().contentWidthProperty().multiply(0.7));
         maxHeightProperty().bind(Controllers.getDecorator().contentHeightProperty().multiply(0.7));
@@ -39,7 +55,7 @@ public final class UpgradeDialog extends JFXDialogLayout {
         setHeading(heading);
         setBody(new JFXSpinner());
 
-        String url = CHANGELOG_URL + remoteVersion.channel().channelName + ".html";
+        String url = changelogUrl(remoteVersion);
 
         Task.supplyAsync(Schedulers.io(), () -> {
             VersionNumber targetVersion = VersionNumber.asVersion(remoteVersion.version());
@@ -48,13 +64,20 @@ public final class UpgradeDialog extends JFXDialogLayout {
                 // Downgrade update, no need to display changelog
                 return null;
 
-            Document document = Jsoup.parse(WebURL.toURL(url), 30 * 1000);
-            Node node = document.selectFirst("h1[data-version=\"%s\"]".formatted(targetVersion));
-
             HTMLRenderer renderer = new HTMLRenderer(uri -> {
                 LOG.info("Open link: " + uri);
                 FXUtils.openLink(uri.toString());
             });
+
+            // Nightly builds have no changelog page on docs.hmcl.net.
+            if (remoteVersion.channel() == UpdateChannel.NIGHTLY) {
+                Element list = new Element("ul");
+                list.appendElement("li").text(i18n("update.changelog.empty"));
+                return renderer.appendNode(list).mergeLineBreaks().render();
+            }
+
+            Document document = Jsoup.parse(WebURL.toURL(url), 30 * 1000);
+            Node node = document.selectFirst("h1[data-version=\"%s\"]".formatted(targetVersion));
 
             if (node == null || !"h1".equals(node.nodeName())) {
                 LOG.warning("Changelog not found");
