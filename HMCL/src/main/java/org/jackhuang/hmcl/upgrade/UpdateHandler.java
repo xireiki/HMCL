@@ -21,6 +21,7 @@ import org.jackhuang.hmcl.util.SwingUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
@@ -91,6 +92,66 @@ public final class UpdateHandler {
             return;
         }
 
+        if (version.channel() == UpdateChannel.NIGHTLY && version.url() == null) {
+            requestNightlyToken(version);
+            return;
+        }
+
+        showUpdateDialog(version);
+    }
+
+    /// Uses the stored GitHub token, or asks for one when it is missing.
+    private static void requestNightlyToken(RemoteVersion version) {
+        String token = SettingsManager.userSettings().nightlyUpdateGithubTokenProperty().get();
+        if (StringUtils.isBlank(token)) {
+            promptNightlyToken(version, null);
+        } else {
+            resolveNightly(version, token.trim());
+        }
+    }
+
+    /// Resolves a nightly build with a stored token, asking again if it no longer works.
+    private static void resolveNightly(RemoteVersion version, String token) {
+        thread(() -> {
+            try {
+                RemoteVersion resolved = version.withUrl(NightlyUpdateSource.resolve(version, token));
+                Platform.runLater(() -> showUpdateDialog(resolved));
+            } catch (IOException e) {
+                LOG.warning("Failed to resolve nightly build", e);
+                Platform.runLater(() -> promptNightlyToken(version, token));
+            }
+        });
+    }
+
+    /// Asks for the GitHub token needed to download a nightly build and remembers it.
+    ///
+    /// @param version the update to download
+    /// @param initialValue the token to prefill, or `null` when none is stored
+    private static void promptNightlyToken(RemoteVersion version, @Nullable String initialValue) {
+        Controllers.prompt(i18n("update.nightly.github_token"), (token, handler) -> {
+            if (StringUtils.isBlank(token)) {
+                handler.reject(i18n("update.nightly.github_token.required"));
+                return;
+            }
+
+            String trimmed = token.trim();
+            thread(() -> {
+                try {
+                    RemoteVersion resolved = version.withUrl(NightlyUpdateSource.resolve(version, trimmed));
+                    Platform.runLater(() -> {
+                        SettingsManager.userSettings().nightlyUpdateGithubTokenProperty().set(trimmed);
+                        handler.resolve();
+                        showUpdateDialog(resolved);
+                    });
+                } catch (IOException e) {
+                    LOG.warning("Failed to resolve nightly build", e);
+                    Platform.runLater(() -> handler.reject(i18n("update.nightly.github_token.invalid", e.getMessage())));
+                }
+            });
+        }, initialValue);
+    }
+
+    private static void showUpdateDialog(RemoteVersion version) {
         Controllers.dialog(new UpgradeDialog(version, () -> {
             Path downloaded;
             try {

@@ -37,7 +37,8 @@ public final class Metadata {
 
     public static final String PUBLISH_URL = "https://hmcl.huangyuhui.net";
     public static final String REPOSITORY_URL = "https://github.com/HMCL-dev/HMCL";
-    public static final String HMCL_UPDATE_URL = System.getProperty("hmcl.update_source.override", PUBLISH_URL + "/api/update_link");
+    public static final String HMCL_UPDATE_URL = System.getProperty("hmcl.update_source.override",
+            JarUtils.getAttribute("hmcl.update.url", PUBLISH_URL + "/api/update_link"));
     public static final String MANUAL_UPDATE_URL = "https://github.com/HMCL-dev/HMCL/releases";
 
     public static final String DOCS_URL = "https://docs.hmcl.net";
